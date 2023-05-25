@@ -30,7 +30,7 @@ app.get("/internal/healthy", (req, res) => {
   res.status(200).end("OK");
 });
 
-app.post("/webhook", (req, res) => {
+app.post("/webhook", async (req, res) => {
   const bufferBody = req.body;
   const signature = req.headers["x-hub-signature-256"];
   const eventType = req.headers["x-gitHub-event"];
@@ -48,9 +48,37 @@ app.post("/webhook", (req, res) => {
     return;
   }
 
-  console.log(`Received payload with type ${eventType}`, body);
+  const data = JSON.parse(body);
+  console.log(
+    `Received payload with type ${eventType} for repository ${data?.repository?.full_name}`
+  );
   res.status(200).end(JSON.stringify({ success: true }));
+  await handleHook(eventType, data);
 });
+
+const handleHook = (function () {
+  const handlers = {
+    ping: () => {},
+    dependabot_alert: ({ repository, action, alert }) => {
+      console.log(
+        `Dependabot alert for ${
+          repository?.full_name
+        }: ${action} [${alert?.security_advisory?.severity?.toUpperCase()}] ${
+          alert.summary
+        } (${alert?.dependency?.package?.name})`
+      );
+    },
+  };
+
+  return async (eventType, data) => {
+    const handler = handlers[eventType];
+    if (handler) {
+      await handler(data);
+    } else {
+      console.log(`Unexpected event type: ${eventType}`);
+    }
+  };
+})();
 
 app.listen(config.PORT, () => {
   console.log(`Started webhook receiver on port ${config.PORT}`);
