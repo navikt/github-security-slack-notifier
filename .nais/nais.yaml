@@ -45,3 +45,5 @@ spec:
   env:
     - name: NPM_CONFIG_CACHE
       value: /tmp
+    - name: SLACK_CHANNEL_ID
+      value: C0590LXUP1V
