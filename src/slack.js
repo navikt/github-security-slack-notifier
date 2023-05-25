@@ -16,6 +16,15 @@ class Slackbot {
       text,
     });
   }
+
+  async sendMessage({ text, blocks }) {
+    await this.app.client.chat.postMessage({
+      channel: this.channelId,
+      unfurl_links: false,
+      text,
+      blocks,
+    });
+  }
 }
 
 module.exports = { Slackbot };

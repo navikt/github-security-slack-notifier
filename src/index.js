@@ -57,9 +57,16 @@ app.post("/webhook", async (req, res) => {
 });
 
 const handleHook = (function () {
+  const severityEmojis = {
+    low: ":severity-low:",
+    medium: ":severity-medium:",
+    high: ":severity-high:",
+    critical: ":severity-critical:",
+  };
+
   const handlers = {
     ping: () => {},
-    dependabot_alert: ({ repository, action, alert }) => {
+    dependabot_alert: async ({ repository, action, alert, url }) => {
       console.log(
         `Dependabot alert for ${
           repository?.full_name
@@ -67,6 +74,31 @@ const handleHook = (function () {
           alert.summary
         } (${alert?.dependency?.package?.name})`
       );
+      if (action === "created") {
+        const emoji =
+          severityEmojis[alert?.security_advisory?.severity] ?? ":dependabot:";
+        const blocks = [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `${emoji} *<${url}|${alert?.security_advisory?.summary}>* in <${repository.html_url}|${repository.name}>`,
+            },
+          },
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: `\`${alert?.dependency?.package?.name}\``,
+              },
+            ],
+          },
+        ];
+      }
+      await slack.sendMessage({
+        blocks,
+      });
     },
   };
 
