@@ -1,5 +1,5 @@
 const express = require("express");
-const crypto = require("crypto");
+const { verifySignature } = require("./github");
 
 const config = {
   GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
@@ -30,7 +30,7 @@ app.post("/webhook", (req, res) => {
 
   const body = bufferBody.toString();
 
-  if (!verifySignature(body, signature)) {
+  if (!verifySignature(body, signature, config.GITHUB_WEBHOOK_SECRET)) {
     console.log("Received bad signature for payload");
     res.status(403).end("Invalid signature");
     return;
@@ -43,13 +43,3 @@ app.post("/webhook", (req, res) => {
 app.listen(config.PORT, () => {
   console.log(`Started webhook receiver on port ${config.PORT}`);
 });
-
-function verifySignature(body, signature) {
-  const secret = config.GITHUB_WEBHOOK_SECRET;
-  if (!secret || !signature) {
-    return false;
-  }
-  const hash =
-    "sha256=" + crypto.createHmac("sha256", secret).update(body).digest("hex");
-  return hash === signature;
-}
