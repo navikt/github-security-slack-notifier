@@ -83,17 +83,8 @@ const handleHook = (function () {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `${emoji} <${repository.html_url}|${repository.name}>: *<${alert?.html_url}|${alert?.security_advisory?.summary}>* in \`${alert?.dependency?.package?.name}\``,
+              text: `${emoji} <${repository.html_url}|${repository.name}>: Vulnerability *<${alert?.html_url}|${alert?.security_advisory?.summary}>* in \`${alert?.dependency?.package?.name}\``,
             },
-          },
-          {
-            type: "context",
-            elements: [
-              {
-                type: "mrkdwn",
-                text: `\`${alert?.dependency?.package?.name}\``,
-              },
-            ],
           },
         ];
         await slack.sendMessage({
