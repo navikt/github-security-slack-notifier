@@ -75,15 +75,29 @@ const handleHook = (function () {
           alert?.security_advisory?.summary
         } (${alert?.dependency?.package?.name})`
       );
-      if (action === "created") {
-        const emoji = severityEmojis[severity] ?? ":dependabot:";
-        const text = `[${severity}] ${repository.name}: ${alert?.security_advisory?.summary} in ${alert?.dependency?.package?.name}`;
+      const emoji = severityEmojis[severity] ?? ":dependabot:";
+      const text = `${action}: [${severity}] ${repository.name}: ${alert?.security_advisory?.summary} in ${alert?.dependency?.package?.name}`;
+      if (["created", "reintroduced"].includes(action)) {
         const blocks = [
           {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `${emoji} <${repository.html_url}|${repository.name}>: Vulnerability *<${alert?.html_url}|${alert?.security_advisory?.summary}>* in \`${alert?.dependency?.package?.name}\``,
+              text: `${emoji} <${repository.html_url}|${repository.name}>: ${action} *<${alert?.html_url}|${alert?.security_advisory?.summary}>* in \`${alert?.dependency?.package?.name}\``,
+            },
+          },
+        ];
+        await slack.sendMessage({
+          blocks,
+          text,
+        });
+      } else if (["fixed", "dismissed"].includes(action)) {
+        const blocks = [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `:tada: ${emoji} <${repository.html_url}|${repository.name}>: ${action} *<${alert?.html_url}|${alert?.security_advisory?.summary}>* in \`${alert?.dependency?.package?.name}\``,
             },
           },
         ];
