@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const RateLimit = require("express-rate-limit");
 const { verifySignature } = require("./github");
 const { Slackbot } = require("./slack");
 
@@ -12,6 +13,13 @@ const config = {
 };
 
 const app = express();
+
+const rateLimiter = RateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 50,
+});
+app.use(rateLimiter);
+
 app.disable("x-powered-by");
 app.use(
   express.raw({
