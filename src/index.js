@@ -71,7 +71,7 @@ const handleHook = (function () {
         `Dependabot alert for ${
           repository?.full_name
         }: ${action} [${alert?.security_advisory?.severity?.toUpperCase()}] ${
-          alert.summary
+          alert?.security_advisory?.summary
         } (${alert?.dependency?.package?.name})`
       );
       if (action === "created") {
@@ -95,10 +95,10 @@ const handleHook = (function () {
             ],
           },
         ];
+        await slack.sendMessage({
+          blocks,
+        });
       }
-      await slack.sendMessage({
-        blocks,
-      });
     },
   };
 
