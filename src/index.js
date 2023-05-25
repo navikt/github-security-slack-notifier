@@ -66,23 +66,24 @@ const handleHook = (function () {
 
   const handlers = {
     ping: () => {},
-    dependabot_alert: async ({ repository, action, alert, url }) => {
+    dependabot_alert: async ({ repository, action, alert }) => {
+      const severity = alert?.security_advisory?.severity;
       console.log(
         `Dependabot alert for ${
           repository?.full_name
-        }: ${action} [${alert?.security_advisory?.severity?.toUpperCase()}] ${
+        }: ${action} [${severity?.toUpperCase()}] ${
           alert?.security_advisory?.summary
         } (${alert?.dependency?.package?.name})`
       );
       if (action === "created") {
-        const emoji =
-          severityEmojis[alert?.security_advisory?.severity] ?? ":dependabot:";
+        const emoji = severityEmojis[severity] ?? ":dependabot:";
+        const text = `[${severity}] ${repository.name}: ${alert?.security_advisory?.summary} in ${alert?.dependency?.package?.name}`;
         const blocks = [
           {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `${emoji} *<${url}|${alert?.security_advisory?.summary}>* in <${repository.html_url}|${repository.name}>`,
+              text: `${emoji} <${repository.html_url}|${repository.name}>: *<${alert?.html_url}|${alert?.security_advisory?.summary}>* in \`${alert?.dependency?.package?.name}\``,
             },
           },
           {
@@ -97,6 +98,7 @@ const handleHook = (function () {
         ];
         await slack.sendMessage({
           blocks,
+          text,
         });
       }
     },
