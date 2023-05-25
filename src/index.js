@@ -3,6 +3,7 @@ const crypto = require("crypto");
 
 const config = {
   GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
+  PORT: process.env.PORT ?? 3000,
 };
 
 const app = express();
@@ -37,6 +38,10 @@ app.post("/webhook", (req, res) => {
 
   console.log("Received payload", body);
   res.status(200).end(JSON.stringify({ success: true }));
+});
+
+app.listen(config.PORT, () => {
+  console.log(`Started webhook receiver on port ${config.PORT}`);
 });
 
 function verifySignature(body, signature) {
