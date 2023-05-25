@@ -1,0 +1,47 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: github-security-slack-notifier
+  namespace: security-champion-admin
+  labels:
+    team: security-champion-admin
+spec:
+  port: 3000
+  ingresses:
+    {{#each ingresses as |url|}}
+       - {{url}}
+      {{/each}}
+  image: {{ image }}
+  replicas:
+    min: 2
+    max: 3
+    cpuThresholdPercentage: 75
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1024Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
+  liveness:
+    path: /internal/healthy
+    initialDelay: 5
+    timeout: 1
+    periodSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /internal/healthy
+    initialDelay: 20
+    timeout: 1
+  prometheus:
+    enabled: false
+  accessPolicy:
+    outbound:
+      external:
+        - host: slack.com
+        - host: github.com
+  envFrom:
+    - secret: github-security-slack-notifier-secrets
+  env:
+    - name: NPM_CONFIG_CACHE
+      value: /tmp
