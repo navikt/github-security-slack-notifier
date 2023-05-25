@@ -1,8 +1,13 @@
+require("dotenv").config();
 const express = require("express");
 const { verifySignature } = require("./github");
+const { Slackbot } = require("./slack");
 
 const config = {
   GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
+  SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN,
+  SLACK_CHANNEL_ID: process.env.SLACK_CHANNEL_ID,
+  SLACK_SIGNING_SECRET: process.env.SLACK_SIGNING_SECRET,
   PORT: process.env.PORT ?? 3000,
 };
 
@@ -14,6 +19,12 @@ app.use(
     limit: "5mb",
   })
 );
+
+const slack = new Slackbot({
+  slackBotToken: config.SLACK_BOT_TOKEN,
+  slackSigningSecret: config.SLACK_SIGNING_SECRET,
+  channelId: config.SLACK_CHANNEL_ID,
+});
 
 app.get("/internal/healthy", (req, res) => {
   res.status(200).end("OK");
