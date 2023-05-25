@@ -33,7 +33,7 @@ app.get("/internal/healthy", (req, res) => {
 app.post("/webhook", async (req, res) => {
   const bufferBody = req.body;
   const signature = req.headers["x-hub-signature-256"];
-  const eventType = req.headers["x-gitHub-event"];
+  const eventType = req.headers["x-github-event"];
 
   if (!Buffer.isBuffer(bufferBody)) {
     console.log("Received bad payload type (expected buffer)");
