@@ -76,6 +76,40 @@ app.post("/webhook", async (req, res) => {
   await handleHook(eventType, data);
 });
 
+const getAdminTeamsForRepo = (function () {
+  const repoAdminTeamsCache = {};
+
+  return async (repository) => {
+    const owner = repository.owner.login;
+    const repo = repository.name;
+    if (owner !== config.GITHUB_ORG_NAME) {
+      // Ignore non-NAV repos
+      return [];
+    }
+    const cacheKey = repository.full_name;
+    const cachedTeams = repoAdminTeamsCache[cacheKey];
+    if (cachedTeams) return cachedTeams;
+
+    try {
+      const teams = await github.getTeamsForRepo(owner, repo);
+      const adminTeams = teams
+        .filter((team) => team?.permissions?.admin)
+        .map((team) => ({
+          name: team.name,
+          url: team.html_url,
+        }));
+      repoAdminTeamsCache[cacheKey] = adminTeams;
+      console.log(
+        `Looked up admin teams for ${cacheKey}, found ${adminTeams.length}`
+      );
+      return adminTeams;
+    } catch (e) {
+      console.log(`Error looking up admin teams for ${cacheKey}`, e);
+      return [];
+    }
+  };
+})();
+
 const handleHook = (function () {
   const severityEmojis = {
     low: ":severity-low:",
@@ -97,6 +131,7 @@ const handleHook = (function () {
       );
       const emoji = severityEmojis[severity] ?? ":dependabot:";
       const text = `${action}: [${severity}] ${repository.name}: ${alert?.security_advisory?.summary} in ${alert?.dependency?.package?.name}`;
+      const teams = await getAdminTeamsForRepo(repository);
       if (["created", "reintroduced"].includes(action)) {
         const blocks = [
           {
@@ -107,6 +142,20 @@ const handleHook = (function () {
             },
           },
         ];
+        if (teams.length) {
+          const teamsString = teams
+            .map((team) => `*<${team.url}|${team.name}>*`)
+            .join(", ");
+          blocks.push({
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: `Teams (admin): ${teamsString}`,
+              },
+            ],
+          });
+        }
         await slack.sendMessage({
           blocks,
           text,
@@ -121,6 +170,20 @@ const handleHook = (function () {
             },
           },
         ];
+        if (teams.length) {
+          const teamsString = teams
+            .map((team) => `*<${team.url}|${team.name}>*`)
+            .join(", ");
+          blocks.push({
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: `Teams (admin): ${teamsString}`,
+              },
+            ],
+          });
+        }
         await slack.sendMessage({
           blocks,
           text,
