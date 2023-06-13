@@ -196,7 +196,7 @@ const handleHook = (function () {
 
   return async (eventType, data) => {
     const handler = handlers[eventType];
-    if (typeof handler === "function") {
+    if (handlers.hasOwnProperty(eventType) && typeof handler === "function") {
       await handler(data);
     } else {
       console.log(`Unexpected event type: %s`, eventType);
