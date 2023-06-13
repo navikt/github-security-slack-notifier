@@ -100,11 +100,13 @@ const getAdminTeamsForRepo = (function () {
         }));
       repoAdminTeamsCache[cacheKey] = adminTeams;
       console.log(
-        `Looked up admin teams for ${cacheKey}, found ${adminTeams.length}`
+        `Looked up admin teams for %s, found %d`,
+        cacheKey,
+        adminTeams.length
       );
       return adminTeams;
     } catch (e) {
-      console.log(`Error looking up admin teams for ${cacheKey}`, e);
+      console.log(`Error looking up admin teams for %s`, cacheKey, e);
       return [];
     }
   };
@@ -197,7 +199,7 @@ const handleHook = (function () {
     if (typeof handler === "function") {
       await handler(data);
     } else {
-      console.log(`Unexpected event type: ${eventType}`);
+      console.log(`Unexpected event type: %s`, eventType);
     }
   };
 })();
