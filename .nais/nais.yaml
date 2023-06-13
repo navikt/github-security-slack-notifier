@@ -47,3 +47,5 @@ spec:
       value: /tmp
     - name: SLACK_CHANNEL_ID
       value: C0590LXUP1V
+    - name: GITHUB_ORG_NAME
+      value: navikt

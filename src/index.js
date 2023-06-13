@@ -1,14 +1,20 @@
 require("dotenv").config();
 const express = require("express");
 const RateLimit = require("express-rate-limit");
-const { verifySignature } = require("./github");
+const { Github, verifySignature } = require("./github");
 const { Slackbot } = require("./slack");
 
 const config = {
   GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
+  GITHUB_APP_ID: process.env.GITHUB_APP_ID,
+  GITHUB_INSTALLATION_ID: process.env.GITHUB_INSTALLATION_ID,
+  GITHUB_ORG_NAME: process.env.GITHUB_ORG_NAME,
+  GITHUB_PRIVATE_KEY: process.env.GITHUB_PRIVATE_KEY,
+
   SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN,
   SLACK_CHANNEL_ID: process.env.SLACK_CHANNEL_ID,
   SLACK_SIGNING_SECRET: process.env.SLACK_SIGNING_SECRET,
+
   PORT: process.env.PORT ?? 3000,
 };
 
@@ -27,6 +33,12 @@ app.use(
     limit: "5mb",
   })
 );
+
+const github = new Github({
+  appId: config.GITHUB_APP_ID,
+  installationId: config.GITHUB_INSTALLATION_ID,
+  privateKey: config.GITHUB_PRIVATE_KEY,
+});
 
 const slack = new Slackbot({
   slackBotToken: config.SLACK_BOT_TOKEN,
@@ -127,6 +139,15 @@ const handleHook = (function () {
   };
 })();
 
-app.listen(config.PORT, () => {
-  console.log(`Started webhook receiver on port ${config.PORT}`);
-});
+(async () => {
+  app.listen(config.PORT, async () => {
+    console.log(`Started webhook receiver on port ${config.PORT}`);
+  });
+
+  try {
+    await github.auth();
+    console.log("Authenticated with Github API");
+  } catch (e) {
+    console.log("Error authenticating with Github", e);
+  }
+})();

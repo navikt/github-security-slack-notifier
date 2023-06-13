@@ -11,10 +11,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@octokit/plugin-rest-endpoint-methods": "7.2.1",
     "@slack/bolt": "3.13.1",
     "dotenv": "16.0.3",
     "express": "4.18.2",
-    "express-rate-limit": "6.7.0"
+    "express-rate-limit": "6.7.0",
+    "octokit": "2.0.19"
   },
   "devDependencies": {
     "husky": "8.0.3",
