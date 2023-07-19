@@ -112,6 +112,27 @@ const getAdminTeamsForRepo = (function () {
   };
 })();
 
+async function getRepoTeamsBlocks(repository) {
+  const teams = await getAdminTeamsForRepo(repository);
+  if (!teams.length) return [];
+
+  const teamsString = teams
+    .map((team) => `*<${team.url}|${team.name}>*`)
+    .join(", ");
+
+  return [
+    {
+      type: "context",
+      elements: [
+        {
+          type: "mrkdwn",
+          text: `Teams (admin): ${teamsString}`,
+        },
+      ],
+    },
+  ];
+}
+
 const handleHook = (function () {
   const severityEmojis = {
     low: ":severity-low:",
@@ -131,66 +152,27 @@ const handleHook = (function () {
           alert?.security_advisory?.summary
         } (${alert?.dependency?.package?.name})`
       );
-      const emoji = severityEmojis[severity] ?? ":dependabot:";
+      const isResolved = ["fixed", "dismissed"].includes(action);
+      const emoji = isResolved
+        ? ":tada:"
+        : severityEmojis[severity] ?? ":dependabot:";
       const text = `${action}: [${severity}] ${repository.name}: ${alert?.security_advisory?.summary} in ${alert?.dependency?.package?.name}`;
-      const teams = await getAdminTeamsForRepo(repository);
-      if (["created", "reintroduced"].includes(action)) {
-        const blocks = [
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `${emoji} <${repository.html_url}|${repository.name}>: ${action} *<${alert?.html_url}|${alert?.security_advisory?.summary}>* in \`${alert?.dependency?.package?.name}\``,
-            },
+      const teamsBlocks = await getRepoTeamsBlocks(repository);
+
+      const blocks = [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `${emoji} <${repository.html_url}|${repository.name}>: ${action} *<${alert?.html_url}|${alert?.security_advisory?.summary}>* in \`${alert?.dependency?.package?.name}\``,
           },
-        ];
-        if (teams.length) {
-          const teamsString = teams
-            .map((team) => `*<${team.url}|${team.name}>*`)
-            .join(", ");
-          blocks.push({
-            type: "context",
-            elements: [
-              {
-                type: "mrkdwn",
-                text: `Teams (admin): ${teamsString}`,
-              },
-            ],
-          });
-        }
-        await slack.sendMessage({
-          blocks,
-          text,
-        });
-      } else if (["fixed", "dismissed"].includes(action)) {
-        const blocks = [
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `:tada: ${emoji} <${repository.html_url}|${repository.name}>: ${action} *<${alert?.html_url}|${alert?.security_advisory?.summary}>* in \`${alert?.dependency?.package?.name}\``,
-            },
-          },
-        ];
-        if (teams.length) {
-          const teamsString = teams
-            .map((team) => `*<${team.url}|${team.name}>*`)
-            .join(", ");
-          blocks.push({
-            type: "context",
-            elements: [
-              {
-                type: "mrkdwn",
-                text: `Teams (admin): ${teamsString}`,
-              },
-            ],
-          });
-        }
-        await slack.sendMessage({
-          blocks,
-          text,
-        });
-      }
+        },
+        ...teamsBlocks,
+      ];
+      await slack.sendMessage({
+        blocks,
+        text,
+      });
     },
   };
 
