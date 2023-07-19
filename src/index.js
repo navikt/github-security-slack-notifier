@@ -202,6 +202,30 @@ const handleHook = (function () {
         text,
       });
     },
+    secret_scanning_alert: async ({ repository, action, alert }) => {
+      const secretType = alert?.secret_type_display_name ?? "secret";
+      console.log(
+        `Secret scanning alert for ${repository?.full_name}: ${action} ${secretType}`
+      );
+      const emoji = ":key:";
+      const text = `${action}: ${repository.name}: ${secretType}`;
+      const teamsBlocks = await getRepoTeamsBlocks(repository);
+
+      const blocks = [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `${emoji} <${repository.html_url}|${repository.name}>: ${action} *<${alert?.html_url}|${secretType}>*`,
+          },
+        },
+        ...teamsBlocks,
+      ];
+      await slack.sendMessage({
+        blocks,
+        text,
+      });
+    },
   };
 
   return async (eventType, data) => {
