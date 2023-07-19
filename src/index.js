@@ -174,6 +174,34 @@ const handleHook = (function () {
         text,
       });
     },
+    code_scanning_alert: async ({ repository, action, alert }) => {
+      const severity = alert?.rule?.severity ?? "alert";
+      console.log(
+        `Code scanning alert for ${
+          repository?.full_name
+        }: ${action} [${severity?.toUpperCase()}] ${
+          alert?.rule?.description
+        } (${alert?.rule?.id})`
+      );
+      const emoji = ":codeql:";
+      const text = `${action}: [${severity}] ${repository.name}: ${alert?.rule?.description} from ${alert?.tool?.name}`;
+      const teamsBlocks = await getRepoTeamsBlocks(repository);
+
+      const blocks = [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `${emoji} <${repository.html_url}|${repository.name}>: ${action} *<${alert?.html_url}|${alert?.rule?.description}>* from \`${alert?.tool?.name}\``,
+          },
+        },
+        ...teamsBlocks,
+      ];
+      await slack.sendMessage({
+        blocks,
+        text,
+      });
+    },
   };
 
   return async (eventType, data) => {
